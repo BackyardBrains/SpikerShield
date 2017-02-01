@@ -15,7 +15,7 @@ You are in control... literally! Now you can control machines and electronics of
  - Six channels EMG shield with VU meters and digital outputs ([EMGWithSixChAndVUMeters.ino](Arduino Code/SixChannels/EMGWithSixChAndVUMeters.ino))
  - Communication with SpikeRecorder desktop aplication ([SpikeRecorderSpikerShield_V1_1.ino](Arduino Code/SpikeRecorder/SpikeRecorderSpikerShield_V1_1.ino))
  
- the last Arduino code [SpikeRecorderSpikerShield_V1_1.ino](Arduino Code/SpikeRecorder/SpikeRecorderSpikerShield_V1_1.ino) needs to be loaded in Muscle SpikerShield in order to establish communication between Muscle SpikerShield and our SpikeRecorder desktop application. If you want to connect Muscle SpikerShield to Matlab you can check our simple Matlab example [readSR.m](Documentation/Matlab/readSR.m) that can read 10 seconds of EMG signal from one SpikerShield's channel.
+ the last Arduino code [SpikeRecorderSpikerShield_V1_1.ino](Arduino Code/SpikeRecorder/SpikeRecorderSpikerShield_V1_1.ino) needs to be loaded in Muscle SpikerShield in order to establish communication between Muscle SpikerShield and our SpikeRecorder desktop application. If you want to connect Muscle SpikerShield to Matlab you can check our simple Matlab example [readSR.m](Documentation/Matlab/readSR.m) that can read 10 seconds of EMG signal from one SpikerShield's channel. 
  
 
  
