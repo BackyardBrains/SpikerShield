@@ -13,9 +13,9 @@ You are in control... literally! Now you can control machines and electronics of
  - HHI + gripper control (both functionalities in one code)([MuscleSpikerShieldWithHHIAndGripper_V1_0.ino](Arduino Code/GripperAndHHI/MuscleSpikerShieldWithHHIAndGripper_V1_0.ino))
  - HHI + gripper control + auxiliary output combined in one code ([HHI_gripper_light_combined.ino](Arduino Code/PowerCord/HHI_gripper_light_combined.ino))
  - Six channels EMG shield with VU meters and digital outputs ([EMGWithSixChAndVUMeters.ino](Arduino Code/SixChannels/EMGWithSixChAndVUMeters.ino))
- - Communication with SpikeRecorder desktop aplication ([SpikeRecorderMuscleSpikerShield_V1_1.ino](Arduino Code/SpikeRecorder/SpikeRecorderMuscleSpikerShield_V1_1.ino))
+ - Communication with SpikeRecorder desktop aplication ([SpikeRecorderSpikerShield_V1_1.ino](Arduino Code/SpikeRecorder/SpikeRecorderSpikerShield_V1_1.ino))
  
- the last Arduino code [SpikeRecorderMuscleSpikerShield_V1_1.ino](Arduino Code/SpikeRecorder/SpikeRecorderMuscleSpikerShield_V1_1.ino) needs to be loaded in Muscle SpikerShield in order to establish communication between Muscle SpikerShield and our SpikeRecorder desktop application. If you want to connect Muscle SpikerShield to Matlab you can check our simple Matlab example [readSR.m](Documentation/Matlab/readSR.m) that can read 10 seconds of EMG signal from one SpikerShield's channel.
+ the last Arduino code [SpikeRecorderSpikerShield_V1_1.ino](Arduino Code/SpikeRecorder/SpikeRecorderSpikerShield_V1_1.ino) needs to be loaded in Muscle SpikerShield in order to establish communication between Muscle SpikerShield and our SpikeRecorder desktop application. If you want to connect Muscle SpikerShield to Matlab you can check our simple Matlab example [readSR.m](Documentation/Matlab/readSR.m) that can read 10 seconds of EMG signal from one SpikerShield's channel.
  
 
  
