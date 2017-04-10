@@ -4,7 +4,7 @@ You are in control... literally! Now you can control machines and electronics of
 
 [Muscle SpikerShield](https://backyardbrains.com/products/muscleSpikerShield) can be used for numerous experiments. In this repository you will find Arduino code for six example experiments: 
  - [Human-Human interface](https://backyardbrains.com/products/HHI) ([MuscleSpikerShieldWithHHI_V1_0.ino](Arduino Code/HHI/MuscleSpikerShieldWithHHI_V1_0.ino))
- - EMG controlled gripper (robotic claw) ([MuscleSpikerShieldWithGripper_V1_0.ino](Arduino Code/Gripper/MuscleSpikerShieldWithGripper_V1_0.ino))
+ - EMG controlled gripper (robotic claw) ( [MuscleSpikerShieldWithGripper_V1_0.ino](Arduino Code/Gripper/MuscleSpikerShieldWithGripper_V1_0.ino) )
  - Simple loop for testing gripper ([MuscleSpikerShield_GripperLoop.ino](Arduino Code/Gripper/MuscleSpikerShield_GripperLoop.ino))
  - EMG controlled auxiliary output ([MuscleSpikerShieldForPowerCordV1_0.ino](Arduino Code/PowerCord/MuscleSpikerShieldForPowerCordV1_0.ino))
  - EMG controlled on board relay ([MuscleSpikerShieldWithRelay_V1_0.ino](Arduino Code/OnBoardRelay/MuscleSpikerShieldWithRelay_V1_0.ino))
