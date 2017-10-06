@@ -4,7 +4,7 @@
 // Backyard Brains
 // Stanislav Mircic
 // https://backyardbrains.com/
-// This code is made for Hear and Brain SpikerShield and similar products that need to communicate with
+// This code is made for Heart and Brain SpikerShield and similar products that need to communicate with
 // Spike Recorder desktop software via USB (virtual serial port).
 // Sample rate depends on number of channels that are enabled. It is 10kHz divided with number of channels
 // So, if only one channel is enabled sample rate is 10kHz. If two channels are enabled sample rate will be 5kHz etc.
