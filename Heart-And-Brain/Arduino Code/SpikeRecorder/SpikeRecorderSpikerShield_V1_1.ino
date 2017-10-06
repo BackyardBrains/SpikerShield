@@ -4,11 +4,13 @@
 // Backyard Brains
 // Stanislav Mircic
 // https://backyardbrains.com/
-// This code is made for Muscle SpikerShield and similar products that need to communicate with
+// This code is made for Hear and Brain SpikerShield and similar products that need to communicate with
 // Spike Recorder desktop software via USB (virtual serial port).
 // Sample rate depends on number of channels that are enabled. It is 10kHz divided with number of channels
 // So, if only one channel is enabled sample rate is 10kHz. If two channels are enabled sample rate will be 5kHz etc.
 //
+
+#define CURRENT_SHIELD_TYPE "HWT:HEARTSS;"
 
 #define EKG A0 //we are reading from AnalogIn 0
 #define BUFFER_SIZE 100  //sampling buffer size
@@ -28,7 +30,9 @@ int tail = 0;//tail index for sampling circular buffer
 byte writeByte;
 char commandBuffer[SIZE_OF_COMMAND_BUFFER];//receiving command buffer
 byte reading[BUFFER_SIZE]; //Sampling buffer
-
+#define ESCAPE_SEQUENCE_LENGTH 6
+byte escapeSequence[ESCAPE_SEQUENCE_LENGTH] = {255,255,1,1,128,255};
+byte endOfescapeSequence[ESCAPE_SEQUENCE_LENGTH] = {255,255,1,1,129,255};
 
 int messageImpulsPin = 5;
 int messageImpulseTimer = 0;
@@ -257,6 +261,12 @@ void serialEvent()
             digitalWrite(messageImpulsPin, HIGH);
             messageImpulseTimer = (LENGTH_OF_MESSAGE_IMPULS * 10)/numberOfChannels;
           }
+          if(*separator == 'b')//if we received command for impuls
+          {
+            //sendMessage("HWT:PLANTSS;");
+            //sendMessage("HWT:MUSCLESS;");
+            sendMessage(CURRENT_SHIELD_TYPE);
+          }
       }
       // Find the next command in input string
       command = strtok(0, ";");
@@ -267,6 +277,45 @@ void serialEvent()
   commandMode = 0;
 }
 
+//push message to main sending buffer
+//timer for sampling must be dissabled when 
+//we call this function
+void sendMessage(const char * message)
+{
+
+  int i;
+  //send escape sequence
+  for(i=0;i< ESCAPE_SEQUENCE_LENGTH;i++)
+  {
+      reading[head++] = escapeSequence[i];
+      if(head==BUFFER_SIZE)
+      {
+        head = 0;
+      }
+  }
+
+  //send message
+  i = 0;
+  while(message[i] != 0)
+  {
+      reading[head++] = message[i++];
+      if(head==BUFFER_SIZE)
+      {
+        head = 0;
+      }
+  }
+
+  //send end of escape sequence
+  for(i=0;i< ESCAPE_SEQUENCE_LENGTH;i++)
+  {
+      reading[head++] = endOfescapeSequence[i];
+      if(head==BUFFER_SIZE)
+      {
+        head = 0;
+      }
+  }
+  
+}
 
 void loop(){
     
