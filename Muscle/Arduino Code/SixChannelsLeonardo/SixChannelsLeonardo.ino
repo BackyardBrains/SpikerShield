@@ -71,7 +71,7 @@ byte bitMask = 1;                               //general purpose bit mask byte 
 //--------------------- color coded LEDs operation variable/constants
 #define TURN_ON_LEDS_BUTTON_PIN 5               //button on pin 5 that turns on color coded LEDs
 #define COLOR_CODED_LEDS_ENABLE_PIN 13          //pin that enables color coded LEDs
-#define COLOR_CODED_LEDS_TIME 120000//1200000L          //How much time color coded LEDs will be ON (1sec = 10000)
+#define COLOR_CODED_LEDS_TIME 1200000L          //How much time color coded LEDs will be ON (1sec = 10000)
 unsigned long countdownTimerForLeds;            //countdown timer that keeps track for how long LED is ON
 
 //--------------------- dimming of color coded LEDs variable/constants
