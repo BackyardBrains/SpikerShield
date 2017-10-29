@@ -1,6 +1,8 @@
 /*
   * ----------------------------------------------------------------------------------------------------
-  * Backyard Brains 2016
+  * Backyard Brains 2017
+  * 
+  * Made for Arduino Leonardo board
   * 
   * Made for 6 chanel EMG that: 
   * - sends data for SpikeRecorder application 
