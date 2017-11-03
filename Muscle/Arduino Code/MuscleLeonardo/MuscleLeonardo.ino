@@ -65,7 +65,7 @@ byte endOfescapeSequence[ESCAPE_SEQUENCE_LENGTH] = {255,255,1,1,129,255};       
 byte messageSending = 0;                        //flag that signals TX handler to send data from "messageBuffer"           
 byte lengthOfMessasge = 0;                      //length of message in message buffer
 byte messageSendingIndex = 0;                   //index of next byte in messageBuffer that needs to be sent
-
+byte incomingByte;
 volatile uint16_t samplingBuffer[MAX_NUMBER_OF_CHANNELS];     //main buffer that contains real measurements
 
 int sensitivities[] = {200, 350, 520, 680, 840, 1000};        //maximum value of EMG in AD units, saturation value
@@ -451,6 +451,8 @@ void loop()
         }
    }
 
+
+
   //----------------------------------SENDING DATA ----------------------------------------------------------
    if(outputBufferReady == 1 && sendBufferIndex ==0)//if we have new data
    {
@@ -461,71 +463,88 @@ void loop()
     }
       //--------------------------------- PARSING OF INCOMING MESSAGES --------------------------------------
 
- if(Serial.available()>0)
-    {
-                     // digitalWrite(6, HIGH);
-                   //digitalWrite(6, LOW);
-                  
-                  //TIMSK1 &= ~(1 << OCIE1A);//disable timer for sampling
-                  // read untill \n from the serial port:
-                  String inString = Serial.readStringUntil('\n');
-                
-                  //convert string to null terminate array of chars
-                  inString.toCharArray(commandBuffer, SIZE_OF_COMMAND_BUFFER);
-                  commandBuffer[inString.length()] = 0;
-                  
-                  
-                  // breaks string str into a series of tokens using delimiter ";"
-                  // Namely split strings into commands
-                  char* command = strtok(commandBuffer, ";");
-                  while (command != 0)
-                  {
-                      // Split the command in 2 parts: name and value
-                      char* separator = strchr(command, ':');
-                      if (separator != 0)
-                      {
-                          // Actually split the string in 2: replace ':' with 0
-                          *separator = 0;
-                          --separator;
-                          if(*separator == 'c')//if we received command for number of channels
-                          {
-                            separator = separator+2;
-                             
-                            tempNumberOfChanels = (byte)atoi(separator);//read number of channels
-                            TIMSK1 &= ~(1 << OCIE1A);//disable timer for sampling
-                            PORTD &= B11111110;//Turn OFF relay
-                            numberOfChannels = tempNumberOfChanels;
-                            regularChannelsIndex = 0;
-                            antiFlickeringCounterMax =  ((ANTI_FLICKERING_TIME_IN_MS*10)/numberOfChannels);
-                            gripperButtonDebounceCounterMax = GRIPPER_BUTTON_DEBOUNCE/numberOfChannels;
-                            sensitivityVisualFeedbackCounterMax = SENSITIVITY_LED_FEEDBACK/numberOfChannels;
-                            antiFlickeringTimerForOutput = antiFlickeringCounterMax;
-                            OCR1A = (interrupt_Number+1)*numberOfChannels - 1;
-                            TIMSK1 |= (1 << OCIE1A);//enable timer for sampling
-                          }
-                           if(*separator == 's')//if we received command for sampling rate
-                          {
-                            //do nothing. Do not change sampling rate at this time.
-                            //We calculate sampling rate further below as (max Fs)/(Number of channels)
-                          }
+  while (Serial.available() > 0) {
+        // read the incoming byte:
+        incomingByte = Serial.read();
 
-                          if(*separator == 'b')//if we received command for impuls
-                          {
-                            TIMSK1 &= ~(1 << OCIE1A);                       
-                            PORTD &= B11111110;//Turn OFF relay
-                            sendMessage(CURRENT_SHIELD_TYPE);
-                            TIMSK1 |= (1 << OCIE1A);
-                          }
-                      }
-                      // Find the next command in input string
-                      command = strtok(0, ";");
-                  }
-                  //calculate sampling rate
-                  
-                  //TIMSK1 |= (1 << OCIE1A);//enable timer for sampling
-                  
-      }
-      
+        if(incomingByte==LINE_FEED)                             //if received byte is \n than we are at the end of message
+        {
+          commandBuffer[commandBufferIndex] = 0;                    //null terminate string
+          messageReceived = 1;                                      //set flag so that main loop knows that we have new messages to parse
+          commandBufferIndex =0;                                    //rewind index of buffer to begining
+        }
+        else
+        {
+          commandBuffer[commandBufferIndex] = incomingByte;     //if we are not at the end of the command just add another character to buffer
+          commandBufferIndex++;                                     //increment writing head index
+          if(commandBufferIndex==SIZE_OF_COMMAND_BUFFER)            //if data is longer than buffer 
+          {
+            
+            commandBufferIndex=0;                                   //start writing from begining
+            break;
+          }
+        }
+  }
+
+
+
+
+if(messageReceived)
+{
+        messageReceived = 0;
+        commandBufferIndex = 0;
+        
+        // breaks string str into a series of tokens using delimiter ";"
+        // Namely split strings into commands
+        char* command = strtok(commandBuffer, ";");
+        while (command != 0)
+        {
+            // Split the command in 2 parts: name and value
+            char* separator = strchr(command, ':');
+            if (separator != 0)
+            {
+                // Actually split the string in 2: replace ':' with 0
+                *separator = 0;
+                --separator;
+                if(*separator == 'c')//if we received command for number of channels
+                {
+                  separator = separator+2;
+                   
+                  tempNumberOfChanels = (byte)atoi(separator);//read number of channels
+                  TIMSK1 &= ~(1 << OCIE1A);//disable timer for sampling
+                  PORTD &= B11111110;//Turn OFF relay
+                  numberOfChannels = tempNumberOfChanels;
+                  regularChannelsIndex = 0;
+                  antiFlickeringCounterMax =  ((ANTI_FLICKERING_TIME_IN_MS*10)/numberOfChannels);
+                  gripperButtonDebounceCounterMax = GRIPPER_BUTTON_DEBOUNCE/numberOfChannels;
+                  sensitivityVisualFeedbackCounterMax = SENSITIVITY_LED_FEEDBACK/numberOfChannels;
+                  antiFlickeringTimerForOutput = antiFlickeringCounterMax;
+                  OCR1A = (interrupt_Number+1)*numberOfChannels - 1;
+                  TIMSK1 |= (1 << OCIE1A);//enable timer for sampling
+                }
+                 if(*separator == 's')//if we received command for sampling rate
+                {
+                  //do nothing. Do not change sampling rate at this time.
+                  //We calculate sampling rate further below as (max Fs)/(Number of channels)
+                }
+
+                if(*separator == 'b')//if we received command for impuls
+                {
+                  TIMSK1 &= ~(1 << OCIE1A);                       
+                  PORTD &= B11111110;//Turn OFF relay
+                  sendMessage(CURRENT_SHIELD_TYPE);
+                  TIMSK1 |= (1 << OCIE1A);
+                }
+            }
+            // Find the next command in input string
+            command = strtok(0, ";");
+        }
+        //calculate sampling rate
+        
+        //TIMSK1 |= (1 << OCIE1A);//enable timer for sampling
+        
+}//message processing if
+ 
       
    
 }//end of main loop
