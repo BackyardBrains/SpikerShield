@@ -74,17 +74,20 @@ int incrementsForLEDThr[] = {28, 53, 81, 108, 135, 161};      //threshold interv
                                                               //for example:for value = 28. EMG envelope needs to increase 28 
                                                               //AD units to light up one more LED  
 
+
+//2.4 - 1.9ms
 //threshold intervals for different sensitivities (sens-120)/16. We are controlling servo by generating PWM signal. Signal has 
 //period of 20ms. To fully close claw PWM needs to be 1.6ms ON. To fully open claw PWM needs to be 2.4ms ON and rest should be OFF. 
 
 //Our sampling timer is called "periodicaly" every 100us. That gives us enought time resolution
 //to generate PWM signal for servo (20ms/100us = 200). Difference in PWM between fully open and fully closed positions expressed 
-//in TX periods is (2.4ms-1.6ms)/100us = 8. So we need to divide EMG interval (from minimum treshold to saturation value defined
+//in TX periods is (2.4ms-1.9ms)/100us = 5. So we need to divide EMG interval (from minimum treshold to saturation value defined
 //by sensitivities[]) with 8 to get how much AD units EMG envelope needs to change for PWM to extend one timer period (100us).
-int incrementsForClosedClaw[] = {5, 15, 25, 35, 45, 55};       
+//long->short PWM
+int incrementsForClosedClaw[] = {18, 48, 80, 114, 150, 176};       
                                                               
-                                                              
-int incrementsForOpenClaw[] = {10, 20, 30, 40, 50, 60};       //threshold intervals for different sensitivities (sens-40)/16
+//short->long PWM                                                              
+int incrementsForOpenClaw[] = {38, 64, 96, 128, 160, 192};       //threshold intervals for different sensitivities (sens-40)/16
                                                               // see incrementsForClosedClaw[] explanation for details
 uint16_t emgSaturationValue = 0;                              //we rectify EMG value if it crosses emgSaturationValue before we
                                                               //calculate LEDs, relay and servo
@@ -113,16 +116,16 @@ volatile uint16_t envelopeFirstChanel = 0;                    //value of calcula
 uint16_t movingThresholdSum;                                  //temp calculation variable for thresholds for LEDs and servo
 uint16_t incrementForLEDThreshold = 81;                       //increment for LED threshold (how much EMG needs to change to light up one more LED)
                                                               //depends on selected sensitivity
-uint16_t incrementForOpenClawThreshold = 30;                  //increment for PWM. How much EMG needs to change to change PWM for 50us (one TX period)
+uint16_t incrementForOpenClawThreshold = 31;                  //increment for PWM. How much EMG needs to change to change PWM for 50us (one TX period)
                                                               //used only in default open claw state. Depends on sensitivity
-uint16_t incrementForClosedClawThreshold = 25;                //increment for PWM. How much EMG needs to change to change PWM for 50us (one TX period)
+uint16_t incrementForClosedClawThreshold = 28;                //increment for PWM. How much EMG needs to change to change PWM for 50us (one TX period)
                                                               //used only in default closed claw state. Depends on sensitivity
 
 #define OPEN_CLAW_MODE 0
 #define CLOSED_CLAW_MODE 1
 byte currentFunctionality = OPEN_CLAW_MODE;                   //current mode of claw operation (default closed/open)
 
-#define LENGTH_OF_SERVO_PERIOD 400                            //20ms/50us (look explanation for incrementsForClosedClaw[] array)
+#define LENGTH_OF_SERVO_PERIOD 200                            //20ms/100us (look explanation for incrementsForClosedClaw[] array)
 uint16_t servoPeriodCounter = LENGTH_OF_SERVO_PERIOD;         //counter that keeps current time inside one PWM period (expressed in TX periods)
 byte tempActiveServoPeriod = 48;                              //how many 50us periods PWM needs to be ON during one PWM period
 byte activeServoPeriod = 48;                                  //how many 50us periods PWM needs to be ON during one PWM period
@@ -404,7 +407,7 @@ void loop()
           }
 
 
-
+        //2.4 - 1.9ms
         //-------------------------------------------------- SERVO MEASURE --------------------------------------
         if(disableServoMeasure==0)
         {
@@ -413,7 +416,8 @@ void loop()
               if(currentFunctionality == OPEN_CLAW_MODE)
               {
                 //open claw default position PWM is 2.4ms ON out of 20ms period
-                tempActiveServoPeriod = 48;//PWM ON period = 48*50us = 2400us
+                //short -> long PWM
+                tempActiveServoPeriod = 23;//PWM ON period = 48*50us = 2400us
                 for(movingThresholdSum = 40;movingThresholdSum <emgSaturationValue;movingThresholdSum+=incrementForOpenClawThreshold)
                 {
                   if(  movingThresholdSum>envelopeFirstChanel)
@@ -427,7 +431,8 @@ void loop()
               else
               {
                 //closed claw default position PWM is 1.6ms ON out of 20ms period
-                tempActiveServoPeriod = 32;//PWM ON period = 32*50us = 1600us
+                //long -> short PWM
+                tempActiveServoPeriod = 18;//PWM ON period = 32*50us = 1600us
                 for(movingThresholdSum = 120;movingThresholdSum <emgSaturationValue;movingThresholdSum+=incrementForClosedClawThreshold)
                 {
                   if(  movingThresholdSum>envelopeFirstChanel)
@@ -548,67 +553,7 @@ if(messageReceived)
       
    
 }//end of main loop
-//---------------------------------------------- END OF MAIN LOOP ---------------------------------------------------------
-/*
-//-------------------------------------------- SERIAL TX INTERRUPT HANDLER ------------------------------------------------
-ISR (USART_TX_vect)
-{
-    if(messageSending==1)                                       //if we are sending message (board name)
-    {                                               
-        UDR0 = messageBuffer[messageSendingIndex];              //put one byte to serial from message buffer                     
-        messageSendingIndex++;
-        if(messageSendingIndex == lengthOfMessasge)             //if we sent all bytes of message                           
-        {
-            messageSending = 0;                                 //reset flags so that code can continue sending data frames
-            messageSendingIndex = 0;
-            outputBufferReady = 1;
-            sendBufferIndex =0;
-        }
-    }
-    else
-    {
-            
-        if(sendBufferIndex<(numberOfChannels<<1))               //we have 2 * numberOfChannels bytes in one frame
-        {
-              UDR0 = outputFrameBuffer[sendBufferIndex];        //send one byte of frame
-              sendBufferIndex++;
 
-
-              //----------------------------------------------- UPDATE SERVO PWM ----------------------------------------
-              //servo PWM code is embeded here since we don't have and can not use another timer just for that so 
-              //we use TX semi periodic calls (every 50us) to generate PWM  
-              if(servoPeriodCounter>0)                          //if we are inside one PWM period
-              {
-                    servoPeriodCounter--;                       //decrease time inside on PWM period
-                    if(servoPeriodCounter<=activeServoPeriod)
-                    {
-                      PORTD |= B00000100;                       //set PWM pin HIGH
-                    }
-                    else
-                    {
-                      PORTD &= B11111011;                       //set PWM pin LOW
-                    }
-              }
-              else                                              //if we are at the end of PWM period
-              {
-                servoPeriodCounter = LENGTH_OF_SERVO_PERIOD;    //reset time counter
-                PORTD &= B11111011;                             //put PWM pin to LOW
-                if(disableServoMeasure>0)                       //decrement countdown timer for servo measure 
-                {
-                  disableServoMeasure--;
-                }
-                
-              }
-              //-------------------------------------------- END OF SERVO PWM UPDATE ------------------------------------
-        }
-        else
-        {
-            sendBufferIndex = 0;
-        }
-    }
-}
-
-*/
 
 //------------------------------------------ SAMPLING TIMER INTERRUPT --------------------------------------------------
 ISR(TIMER1_COMPA_vect) {
@@ -632,7 +577,7 @@ ISR(TIMER1_COMPA_vect) {
 
    if(servoPeriodCounter>0)                          //if we are inside one PWM period
     {
-          servoPeriodCounter-=2;                       //decrease time inside on PWM period
+          servoPeriodCounter-=1;                       //decrease time inside on PWM period
           if(servoPeriodCounter<=activeServoPeriod)
           {
             PORTD |= B00000010;                       //set PWM pin HIGH
@@ -648,7 +593,7 @@ ISR(TIMER1_COMPA_vect) {
       PORTD &= B11111101;                             //put PWM pin to LOW
       if(disableServoMeasure>0)                       //decrement countdown timer for servo measure 
       {
-        disableServoMeasure-=2;
+        disableServoMeasure-=1;
       }
       
     }
