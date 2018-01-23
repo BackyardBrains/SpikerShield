@@ -22,8 +22,13 @@
 
 #define CURRENT_SHIELD_TYPE "HWT:MUSCLESS;"     //type of the board. Used for detection of shield 
                                                 //by desktop Spike Recorder application
+#define NOISE_FLOOR_FOR_ENVELOPE 530            //must be greater than 512 and less than 1023
 
 #define ANTI_FLICKERING_TIME_IN_MS 50           //relay refresh period in ms
+
+
+
+
 uint16_t antiFlickeringCounterMax;              //relay refresh period in sample periods
 uint16_t antiFlickeringTimerForOutput;          //timer for relay state refresh in sample periods
                                                 //it decreases every sample period and when we hit zero 
@@ -259,13 +264,13 @@ void loop()
         {
 
                   tempEnvValue = samplingBuffer[0];
-                  if(tempEnvValue<512)
+                  if(tempEnvValue<NOISE_FLOOR_FOR_ENVELOPE)
                   {
                     tempEnvValue = 0;  
                   }
                   else
                   {
-                    tempEnvValue = tempEnvValue - 512;  
+                    tempEnvValue = tempEnvValue - NOISE_FLOOR_FOR_ENVELOPE;  
                   }
                   tempEnvValue = tempEnvValue<<1;
                   //--------------- Calculate envelope ------------------------
