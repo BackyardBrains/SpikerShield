@@ -1,10 +1,10 @@
 /*
   * ----------------------------------------------------------------------------------------------------
-  * Backyard Brains 23. Apr. 2017
+  * Backyard Brains 23. Jan. 2018
   * 
   * Muscle SpikerShield with HHI, Claw, LEDs and communication with Spike Recorder integrated.
-  * 
-  * V0.2
+  * This code does not need envelope in order to function. It calculates envelope for LEDs, HHI and the claw
+  * V0.3
   * Written by Stanislav Mircic
   *
   * ----------------------------------------------------------------------------------------------------
@@ -139,6 +139,9 @@ char* separator;                                              //temp variable fo
 
 byte readyToDoAuxComputation = 0;                             //flag that enables auxiliary computation only once per sampling timer interrupt
 
+uint16_t tempEnvValue;
+byte envelopeDecrementCounter = 0;
+#define MAX_ENV_DECREMENT_COUNTER 9
 
 
 //----------------------------------- SETUP FUNCTION --------------------------------------------------------------------------------------------
@@ -214,7 +217,6 @@ void setup()
     sei();                                                //enable Global Interrupts
 }
 
-
 //------------------------------------------------ MAIN LOOP ----------------------------------------------------
 //   Here we:
 //    - initiate sending of data frame by setting UDR0
@@ -225,6 +227,8 @@ void setup()
 //    - refresh relay state if EMG envelope crosses threshold
 //    - calculate servo PWM based on EMG envelope
 //---------------------------------------------------------------------------------------------------------------
+
+
 void loop()
 {
 
@@ -232,14 +236,42 @@ void loop()
    if(readyToDoAuxComputation==1)
    {
         readyToDoAuxComputation = 0;
+      
+                  outputFrameBuffer[0]= (samplingBuffer[0]>>7)| 0x80;           //convert data to frame according to protocol
+                  outputFrameBuffer[1]=  samplingBuffer[0] & 0x7F;              //first bit of every byte is used to flag start of the frame
+
+                 // outputFrameBuffer[0]= (envelopeFirstChanel>>7)| 0x80;           //convert data to frame according to protocol
+                 // outputFrameBuffer[1]=  envelopeFirstChanel & 0x7F;
+                  
+                  outputFrameBuffer[2]= (samplingBuffer[1]>>7)& 0x7F;           //so first bit is set only on first byte of frame (| 0x80)
+                  outputFrameBuffer[3]=  samplingBuffer[1] & 0x7F;
+                  outputFrameBuffer[4]= (samplingBuffer[2]>>7)& 0x7F;
+                  outputFrameBuffer[5]=  samplingBuffer[2] & 0x7F;
+                  outputFrameBuffer[6]= (samplingBuffer[3]>>7)& 0x7F;
+                  outputFrameBuffer[7]=  samplingBuffer[3] & 0x7F;
+                  outputFrameBuffer[8]= (samplingBuffer[4]>>7)& 0x7F;
+                  outputFrameBuffer[9]=  samplingBuffer[4] & 0x7F;
+                  outputFrameBuffer[10]= (samplingBuffer[5]>>7)& 0x7F;
+                  outputFrameBuffer[11]=  samplingBuffer[5] & 0x7F;
+        
         
         if(sensitivityVisualFeedbackCounter==0)//disable update of LEDs when we display selected sensitivity level
         {
 
-                  //--------------- Calculate envelope ------------------------
-                  if(envelopeFirstChanel<samplingBuffer[0])
+                  tempEnvValue = samplingBuffer[0];
+                  if(tempEnvValue<512)
                   {
-                    envelopeFirstChanel=samplingBuffer[0];
+                    tempEnvValue = 0;  
+                  }
+                  else
+                  {
+                    tempEnvValue = tempEnvValue - 512;  
+                  }
+                  tempEnvValue = tempEnvValue<<1;
+                  //--------------- Calculate envelope ------------------------
+                  if(envelopeFirstChanel<tempEnvValue)
+                  {
+                    envelopeFirstChanel=tempEnvValue;
                   }
 
 
@@ -434,56 +466,30 @@ void loop()
       
 
        //---------------------------------------- DECAY OF ENVELOPE ------------------------------------------
-        if(envelopeFirstChanel>0)
-        {
-          //envelope decay is 1 AD unit per one sample period. At 10kHz sampling rate
-          // it is 10000*(5V/1024) per second. So it will linearly decay 5V in 10ms.
-          //It is fast. Maybe we should slower down it here.
-            envelopeFirstChanel--;  
-        }
-   }
 
-  //----------------------------------SENDING DATA ----------------------------------------------------------
-   if(outputBufferReady == 1 && sendBufferIndex ==0)//if we have new data
-   {
+      envelopeDecrementCounter++;
 
-      outputBufferReady = 0;//this will be zero until we send whole frame buffer and fill it again
-      //since we want to do aux computation (LEDs, relay, servo) only once per sample period
-      //and main loop is called multiple times per period (anytime the code is not in interrupt handler)
-      //we set this flag here so that aux comp. is done only once after this initialization of frame sending 
-      readyToDoAuxComputation = 1;
+       if(envelopeDecrementCounter == MAX_ENV_DECREMENT_COUNTER)
+       { 
+            envelopeDecrementCounter = 0;
+            
+            if(envelopeFirstChanel>0)
+            {
+              //envelope decay is 1 AD unit per one sample period. At 10kHz sampling rate
+              // it is 10000*(5V/1024) per second. So it will linearly decay 5V in 10ms.
+              //It is fast. Maybe we should slower down it here.
+                envelopeFirstChanel--;  
+            }
+
+       }
       
-      //Sends first byte of frame. The rest is sent by TX handler.
-      UDR0 = outputFrameBuffer[sendBufferIndex];
-      sendBufferIndex++;
+                                                               //debug
 
 
-      //-------------------------- SERVO PWM UPDATE ---------------------------------------------------------
-      if(servoPeriodCounter>0)//if we are inside PWM period
-      {
-            servoPeriodCounter--;//decrement time inside PWM period
-            if(servoPeriodCounter<=activeServoPeriod)
-            {
-              PORTD |= B00000100;//put PWM to HIGH
-            }
-            else
-            {
-              PORTD &= B11111011;//put PWM to LOW
-            }
-      }
-      else
-      {
-        servoPeriodCounter = LENGTH_OF_SERVO_PERIOD;//start new 20ms period of PWM
-        PORTD &= B11111011;//put PWM to LOW
-        if(disableServoMeasure>0)
-        {
-          disableServoMeasure--;//decrement counter of periods (used to update servo value every N PWM periods)
-        }
-      }
-
-      //--------------------------------- PARSING OF INCOMING MESSAGES --------------------------------------
+       //--------------------------------- PARSING OF INCOMING MESSAGES --------------------------------------
       if(messageReceived ==1)
       {
+        
             messageReceived =0;
         
             command = strtok(commandBuffer, ";");
@@ -521,7 +527,32 @@ void loop()
                 // Find the next command in input string
                 command = strtok(0, ";");
               }  
-      }//end of message received parsing
+          
+            }//end of message received parsing
+            
+   }
+
+  //----------------------------------SENDING DATA ----------------------------------------------------------
+   if(outputBufferReady == 1 && sendBufferIndex ==0)//if we have new data
+   {
+
+      outputBufferReady = 0;//this will be zero until we send whole frame buffer and fill it again
+      //since we want to do aux computation (LEDs, relay, servo) only once per sample period
+      //and main loop is called multiple times per period (anytime the code is not in interrupt handler)
+      //we set this flag here so that aux comp. is done only once after this initialization of frame sending 
+      readyToDoAuxComputation = 1;
+
+      //Sends first byte of frame. The rest is sent by TX handler.
+      
+      UDR0 = outputFrameBuffer[sendBufferIndex];
+      
+      sendBufferIndex++;
+
+
+     
+  
+      
+      
    }//end of detection of fresh frame data
 }//end of main loop
 //---------------------------------------------- END OF MAIN LOOP ---------------------------------------------------------
@@ -529,11 +560,14 @@ void loop()
 //-------------------------------------------- SERIAL RX INTERRUPT HANDLER ------------------------------------------------
 ISR (USART_RX_vect)
 {
+  
     tempReceivedByte = UDR0;                                    //get data from serial register
     if(tempReceivedByte==LINE_FEED)                             //if received byte is \n than we are at the end of message
     {
       commandBuffer[commandBufferIndex] = 0;                    //null terminate string
+     
       messageReceived = 1;                                      //set flag so that main loop knows that we have new messages to parse
+      
       commandBufferIndex =0;                                    //rewind index of buffer to begining
     }
     else
@@ -545,12 +579,13 @@ ISR (USART_RX_vect)
         commandBufferIndex=0;                                   //start writing from begining
       }
     }
+ 
 }
-
 
 //-------------------------------------------- SERIAL TX INTERRUPT HANDLER ------------------------------------------------
 ISR (USART_TX_vect)
 {
+  
     if(messageSending==1)                                       //if we are sending message (board name)
     {                                               
         UDR0 = messageBuffer[messageSendingIndex];              //put one byte to serial from message buffer                     
@@ -565,10 +600,19 @@ ISR (USART_TX_vect)
     }
     else
     {
-            
-        if(sendBufferIndex<(numberOfChannels<<1))               //we have 2 * numberOfChannels bytes in one frame
-        {
-              UDR0 = outputFrameBuffer[sendBufferIndex];        //send one byte of frame
+        
+            if(sendBufferIndex==(numberOfChannels<<1))               //we have 2 * numberOfChannels bytes in one frame
+            {
+                sendBufferIndex = 0;
+                
+            }
+            else
+            {
+              readyToDoAuxComputation = 1;  
+            }
+              
+              UDR0 = outputFrameBuffer[sendBufferIndex];
+               
               sendBufferIndex++;
 
 
@@ -598,12 +642,10 @@ ISR (USART_TX_vect)
                 
               }
               //-------------------------------------------- END OF SERVO PWM UPDATE ------------------------------------
-        }
-        else
-        {
-            sendBufferIndex = 0;
-        }
+        
+       
     }
+     
 }
 
 
@@ -613,21 +655,7 @@ ISR(TIMER1_COMPA_vect) {
   
   ADMUX =  B01000000;                                           //Start ADC Conversions
   ADCSRA |=B01000000;                                           //do this at the begining since ADC can work in
-                                                                //paralel with this timer handler
 
-  outputFrameBuffer[0]= (samplingBuffer[0]>>7)| 0x80;           //convert data to frame according to protocol
-  outputFrameBuffer[1]=  samplingBuffer[0] & 0x7F;              //first bit of every byte is used to flag start of the frame
-  outputFrameBuffer[2]= (samplingBuffer[1]>>7)& 0x7F;           //so first bit is set only on first byte of frame (| 0x80)
-  outputFrameBuffer[3]=  samplingBuffer[1] & 0x7F;
-  outputFrameBuffer[4]= (samplingBuffer[2]>>7)& 0x7F;
-  outputFrameBuffer[5]=  samplingBuffer[2] & 0x7F;
-  outputFrameBuffer[6]= (samplingBuffer[3]>>7)& 0x7F;
-  outputFrameBuffer[7]=  samplingBuffer[3] & 0x7F;
-  outputFrameBuffer[8]= (samplingBuffer[4]>>7)& 0x7F;
-  outputFrameBuffer[9]=  samplingBuffer[4] & 0x7F;
-  outputFrameBuffer[10]= (samplingBuffer[5]>>7)& 0x7F;
-  outputFrameBuffer[11]=  samplingBuffer[5] & 0x7F;
-  
   outputBufferReady = 1;                                        //signal main loop to send frame
 }
 
@@ -637,6 +665,8 @@ ISR(TIMER1_COMPA_vect) {
 //This is called when ADC conversion is complete.
 ISR(ADC_vect)           
 {
+        
+                  
          samplingBuffer[regularChannelsIndex] = ADCL | (ADCH << 8);      // store lower and higher byte of ADC
 
          regularChannelsIndex++;
@@ -649,6 +679,8 @@ ISR(ADC_vect)
             ADMUX =  B01000000 | regularChannelsIndex;                   //Select ADC Channel/ REFS0 set means AVcc is reference
             ADCSRA |=B01000000; 
          }
+         
+        
 } 
 
 
