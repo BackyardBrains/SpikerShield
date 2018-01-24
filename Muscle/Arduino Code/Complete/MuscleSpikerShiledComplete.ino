@@ -146,7 +146,7 @@ byte readyToDoAuxComputation = 0;                             //flag that enable
 
 uint16_t tempEnvValue;
 byte envelopeDecrementCounter = 0;
-#define MAX_ENV_DECREMENT_COUNTER 9
+#define MAX_ENV_DECREMENT_COUNTER 5
 
 
 //----------------------------------- SETUP FUNCTION --------------------------------------------------------------------------------------------
