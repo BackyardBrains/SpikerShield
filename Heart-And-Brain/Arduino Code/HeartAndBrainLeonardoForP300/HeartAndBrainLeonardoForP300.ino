@@ -12,10 +12,10 @@
 
 #define CURRENT_SHIELD_TYPE "HWT:HBLEOSB;"
 #define TONE_PERIOD_MS 2000                 //max 6000
-#define TONE_DURATION_MS 300             //max BEEP_PERIOD_MS
-#define CHANCE_OF_ODD_TONE_PERCENT 10     //max 100
-#define FREQUENCY_OF_NORMAL_TONE_HZ 300     
-#define FREQUENCY_OF_ODD_TONE_HZ 500
+#define TONE_DURATION_MS 300                //max BEEP_PERIOD_MS
+#define CHANCE_OF_ODD_TONE_PERCENT 10       //max 100
+#define FREQUENCY_OF_NORMAL_TONE_HZ 300     //Frequency of normal tone
+#define FREQUENCY_OF_ODD_TONE_HZ 500        //Frequency of odd tone 
 
 
 #define BUFFER_SIZE 256  //sampling buffer size
@@ -41,8 +41,6 @@ byte endOfescapeSequence[ESCAPE_SEQUENCE_LENGTH] = {255,255,1,1,129,255};
 
 #define SPEAKER_OUTPUT 2
 #define EVENT_INPUT_3 3
-
-
 
 unsigned int periodOfToneInTimerIntervals = 10000;
 unsigned int durationOfTone = 3000;
