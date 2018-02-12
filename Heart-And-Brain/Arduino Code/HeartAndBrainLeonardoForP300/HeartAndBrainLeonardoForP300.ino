@@ -6,6 +6,8 @@
 // Stanislav Mircic
 // https://backyardbrains.com/
 //
+// D2 - Speaker output
+// D3 - Aux. button input (generates Event 3 on rising edge)
 //
 
 #define CURRENT_SHIELD_TYPE "HWT:HBLEOSB;"
