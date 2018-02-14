@@ -7,6 +7,7 @@ With our [Heart and Brain (EEG/EKG) SpikerShield](https://backyardbrains.com/pro
  - Code for Heart and Brain SpikerBox (for Arduino Leonardo boards) for eye movement exeperiment [HeartAndBrainLeonardoWithEyeLEDs.ino](Arduino%20Code/HeartAndBrainLeonardoWithEyeLEDs/HeartAndBrainLeonardoWithEyeLEDs.ino)
  - Code for Heart and Brain SpikerBox (for Arduino Leonardo boards) for P300 exeperiment [HeartAndBrainLeonardoForP300.ino](Arduino%20Code/HeartAndBrainLeonardoForP300/HeartAndBrainLeonardoForP300.ino). 
  - [Matlab code](Matlab%20Code/P300) for analysis of recordings for P300 experiment.
+
 If you want to connect Heart and Brain SpikerShield to Matlab you can check our simple Matlab example [readSR.m](Documentation/Matlab/readSR.m) that can read 10 seconds of EEG or EKG signal from one SpikerShield's channel.
  
 
