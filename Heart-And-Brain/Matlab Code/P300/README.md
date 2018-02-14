@@ -1,16 +1,16 @@
-# Heart and Brain SpikerShield 
+# Matlab code for analysis of recordings for P300 experiment
 
-With our [Heart and Brain (EEG/EKG) SpikerShield](https://backyardbrains.com/products/heartAndBrainSpikerShieldBundle), you can view and record the action potentials of your heart and the slow rhythms of your brain using a Computer running our free [Spike Recorder Software](https://backyardbrains.com/products/spikerecorder). In order to connect Arduino to our software you will have to upload this sketch to Arduino board:
+This code is made for analysis of data for [P300 experiment](https://backyardbrains.com/experiments/p300)
+This code expects that experiment was recorded with Heart & Brain SpikerBox (board based on Arduino Leonardo chip) and that board is programmed with custom code for P300 experiment:  [HeartAndBrainLeonardoForP300.ino](Arduino%20Code/HeartAndBrainLeonardoForP300/HeartAndBrainLeonardoForP300.ino). 
 
- - Code for Heart and Brain SpikerBox (for Arduino Leonardo boards) [HeartAndBrainLeonardo.ino](Arduino%20Code/HeartAndBrainLeonardo/HEBSpikerboxLeonardo.ino)
- - Code for Heart and Brain SpikerShield (for Arduino UNO boards)([SpikeRecorderSpikerShield_V1_1.ino](Arduino%20Code/SpikeRecorder/SpikeRecorderSpikerShield_V1_1.ino))
- - Code for Heart and Brain SpikerBox (for Arduino Leonardo boards) for eye movement exeperiment [HeartAndBrainLeonardoWithEyeLEDs.ino](Arduino%20Code/HeartAndBrainLeonardoWithEyeLEDs/HeartAndBrainLeonardoWithEyeLEDs.ino)
- - Code for Heart and Brain SpikerBox (for Arduino Leonardo boards) for P300 exeperiment [HeartAndBrainLeonardoForP300.ino](Arduino%20Code/HeartAndBrainLeonardoForP300/HeartAndBrainLeonardoForP300.ino). 
- - [Matlab code](Matlab%20Code/P300) for analysis of recordings for P300 experiment.
+How o use this code:
+- Put recording (wav file) along with it's event file (text file with "-events.txt" and the end) to the directory with this code.
+- Run Matlab code by running runP300.m file.
+- Matlab will ask: "What is the name of this file?"
+- Type in name of the file with .wav extension and press enter. Example:
 
-If you want to connect Heart and Brain SpikerShield to Matlab you can check our simple Matlab example [readSR.m](Documentation/Matlab/readSR.m) that can read 10 seconds of EEG or EKG signal from one SpikerShield's channel.
- 
-
- 
+  "What is the name of this file? BYB_Recording_2017-12-31_1855.11.wav"
+  
+- Matlab should produce all relevant graphs for [P300 experiment](https://backyardbrains.com/experiments/p300)
  
  
