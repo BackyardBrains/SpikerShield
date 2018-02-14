@@ -1,6 +1,6 @@
-# Matlab code for analysis of recordings for P300 experiment
+# Matlab code for analysis of recordings for EEG P300 experiment
 
-This code is made for analysis of data for [P300 experiment](https://backyardbrains.com/experiments/p300).
+This code is made for analysis of data for [EEG P300 experiment](https://backyardbrains.com/experiments/p300).
 Code expects that experiment was recorded with Heart & Brain SpikerBox (board based on Arduino Leonardo chip) and that board is programmed with custom code for P300 experiment:  [HeartAndBrainLeonardoForP300.ino](Arduino%20Code/HeartAndBrainLeonardoForP300/HeartAndBrainLeonardoForP300.ino). 
 
 How to use this code:
@@ -11,6 +11,6 @@ How to use this code:
 
   "What is the name of this file? BYB_Recording_2017-12-31_1855.11.wav"
   
-- Matlab should produce all relevant graphs for [P300 experiment](https://backyardbrains.com/experiments/p300)
+- Matlab should produce all relevant graphs for [EEG P300 experiment](https://backyardbrains.com/experiments/p300)
  
  
