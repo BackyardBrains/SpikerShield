@@ -8,6 +8,9 @@ https://github.com/MCUdude/MicroCore
 
 Written by Stanislav Mircic
 
+pin 2 - Analog input for EMG is at 
+pin 3 - Digital output for PWM for step motor is at 
+
  */
 
 unsigned int adcValue;
