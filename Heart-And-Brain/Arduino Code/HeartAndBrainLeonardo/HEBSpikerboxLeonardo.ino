@@ -1,10 +1,11 @@
 //
-// Plant SpikerBox based on Leonardo
-// V1.0
+// Heart & Brain based on Leonardo
+// V1.1
 // Backyard Brains
 // Stanislav Mircic
 // https://backyardbrains.com/
 //
+// Carrier signal is at DIO 10 and power led at DIO 13 
 //
 
 #define CURRENT_SHIELD_TYPE "HWT:HBLEOSB;"
@@ -31,11 +32,11 @@ byte reading[BUFFER_SIZE]; //Sampling buffer
 byte escapeSequence[ESCAPE_SEQUENCE_LENGTH] = {255,255,1,1,128,255};
 byte endOfescapeSequence[ESCAPE_SEQUENCE_LENGTH] = {255,255,1,1,129,255};
 
-int messageImpulsPin = 5;
+
 int messageImpulseTimer = 0;
+#define CARRIER_PIN 10
+#define POWER_LED_PIN 13
 
-
-////This sets up serial communication values can 9600, 14400, 19200, 28800, 31250, 38400, 57600, and 115200, also 300, 600, 1200, 2400, 4800, but that's too slow for us
 /// Interrupt number - very important in combination with bit rate to get accurate data
 int interrupt_Number=198;// Output Compare Registers  value = (16*10^6) / (Fs*8) - 1  set to 1999 for 1000 Hz sampling, set to 3999 for 500 Hz sampling, set to 7999 for 250Hz sampling, 199 for 10000 Hz Sampling
 int numberOfChannels = 1;//current number of channels sampling
@@ -49,8 +50,8 @@ void setup(){
   delay(300); //whait for init of serial
   Serial.println("StartUp!");
   Serial.setTimeout(2);
-  pinMode(messageImpulsPin, OUTPUT);
-  pinMode(6, OUTPUT);
+  pinMode(CARRIER_PIN, OUTPUT);//PB6 - pin 10
+  pinMode(POWER_LED_PIN, OUTPUT); 
    
   // TIMER SETUP- the timer interrupt allows preceise timed measurements of the reed switch
   //for mor info about configuration of arduino timers see http://arduino.cc/playground/Code/Timer1
@@ -77,6 +78,7 @@ void setup(){
   sei();//allow interrupts
   //END TIMER SETUP
   TIMSK1 |= (1 << OCIE1A);
+  digitalWrite(POWER_LED_PIN, HIGH);
 }
 
 
@@ -86,7 +88,7 @@ ISR(TIMER1_COMPA_vect) {
    //Interrupt at the timing frequency you set above to measure to measure AnalogIn, and filling the buffers
 
    
-    PORTC ^= B10000000;
+    PORTB ^= B01000000;
    if(commandMode!=1)
    {
       
@@ -175,8 +177,6 @@ void loop(){
 
     if(Serial.available()>0)
     {
-                     // digitalWrite(6, HIGH);
-                   //digitalWrite(6, LOW);
                   commandMode = 1;//frag that we are receiving commands through serial
                   //TIMSK1 &= ~(1 << OCIE1A);//disable timer for sampling
                   // read untill \n from the serial port:
