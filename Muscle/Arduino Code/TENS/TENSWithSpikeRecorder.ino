@@ -8,9 +8,9 @@
   * A0 - EMG input
   * A1 - ---
   * A2 - ---
-  * A3 - Pulse width potentiometer
-  * A4 - Pulse frequency potentiometer
-  * A5 - Natery voltage input
+  * A3 - Pulse width potentiometer - not used in V0.2
+  * A4 - Pulse frequency potentiometer - not used in V0.2
+  * A5 - Batery voltage input
   * 
   * 
   * 
@@ -30,11 +30,14 @@
   * D13 - VU LED 6
   * 
   * 
-  * V0.1
+  * V0.2
   * Written by Stanislav Mircic
   *
   * ----------------------------------------------------------------------------------------------------
   */
+
+#define FIXED_FREQUENCY_HZ 4
+#define FIXED_PULSE_WIDTH_MICROSECONDS 28
 
                                                 //Clear/reset bit in register "cbi" macro
 #ifndef cbi
@@ -216,7 +219,7 @@ void setup()
     //set sensitivity and all variables that depend on sensitivity depending on lastSensitivitiesIndex 
     incrementForLEDThreshold = incrementsForLEDThr[lastSensitivitiesIndex];
 
-    set_freq(4,28);
+    set_freq(FIXED_FREQUENCY_HZ,FIXED_PULSE_WIDTH_MICROSECONDS);
     sei();                                                //enable Global Interrupts
     digitalWrite(6,HIGH);// power ON led
     
@@ -414,33 +417,6 @@ void loop()
         }
 
 
-
-
-
-        //----------------------------------- Set frequency and pulse width ----------------------------------
-
- 
-         //set frequency 250000/f = ICR1
-         //from 4-150Hz
-         temp1 = frequencyOfPulseADCResult>>3;
-         temp2 = 127-temp1;
-         temp3= 475*temp2;
-         temp4 = 1666 + temp3;
-         ICR1 = static_cast<uint16_t>(temp4);
-         
-         //set pulse width it is 4us resolution and zero value is 4us
-         //so we have to substract 4 and divide with 4
-         //from 30-260us
-         temp1 = widthOfPulseADCResult>>4;
-         if(temp1<7)
-         {
-          temp1 = 7;
-          }
-         OCR1A = temp1;
-
-
-        
-      
 
        //---------------------------------------- DECAY OF ENVELOPE ------------------------------------------
         envelopeDecrementCounter++;
