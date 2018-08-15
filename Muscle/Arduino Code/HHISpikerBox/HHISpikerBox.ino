@@ -167,6 +167,10 @@ void setup()
     lowPowerVoltageInADUnits = (uint16_t)((lowPowerVoltage/15.0)*1023);
     shutDownVoltageInADUnits = (uint16_t)((shutDownVoltage/15.0)*1023);
 
+    if(percentageOfStimulationInSixSeconds>100)
+    {
+      percentageOfStimulationInSixSeconds = 100.0;  
+    }
     maxStimulationSamples = (uint16_t)(60000*(percentageOfStimulationInSixSeconds/100.0));//6sec *(max%/100%)
 
     
@@ -357,6 +361,7 @@ void loop()
                       if(stimulationTimeCounter>maxStimulationSamples)
                       {
                           stimulationEnabled = false;
+                          stimulationTimeCounter = maxStimulationSamples;
                       }
                   }
                   else
