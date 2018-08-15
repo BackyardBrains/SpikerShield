@@ -1,6 +1,6 @@
 /*
   * ----------------------------------------------------------------------------------------------------
-  * Backyard Brains 14. Aug. 2018
+  * Backyard Brains 15. Aug. 2018
   * 
   * Made for HHI SpikerBox V1(0.7) 
   * Based on Arduino UNO ATMEGA 328
@@ -11,9 +11,9 @@
   * Pulse width: 100 micro seconds
   * Frequency:   120Hz 
   * 
-  * Cdde sends RAW emg to Spike Recorder via serial interface. It is calculating envelope based on RAW EMG
+  * Code sends RAW emg to Spike Recorder via serial interface. It is calculating envelope based on RAW EMG
   * that is expected to float on Vcc/2. Based on envelope it updates VU meter and creates stimulation square 
-  * wave when envelope crosses threshold.
+  * wave for TENS when envelope crosses the threshold.
   * Threshold can be changed with press of the button on D7.
   * 
   * 
@@ -42,10 +42,11 @@
   * D13 - VU LED 6
   * 
   * 
-  * V0.3
+  * V0.4
   * History:
   * V0.2 Glitches in communication fixed in V0.2 amd sampling frequency lower.
   * V0.3 Serial communication implemented with Serial.write and batery voltage is measured every 3 sec
+  * V0.4 Block of TENS after long activation
   * Written by Stanislav Mircic
   * 
   * ----------------------------------------------------------------------------------------------------
@@ -53,7 +54,9 @@
 #include <avr/sleep.h>//this AVR library contains the methods that controls the sleep modes
 float lowPowerVoltage = 8.1;//In volts
 float shutDownVoltage = 7.1;//In volts
-
+//if this % of six second period stimulation is over threshold we will disable TENS and 
+//wait for TENS to be at least 3 without stimullation over threshold and than enable TENS again
+float percentageOfStimulationInSixSeconds = 50.0; 
 #define FREQUENCY_OF_STIMULATION 120.0 //In Hz
 
 #define POWER_STATE_GOOD 0
@@ -137,6 +140,10 @@ byte powerState = POWER_STATE_GOOD;
 uint16_t powerInADUnits = 1023;
 
 uint16_t measurementTimerForBatery = 0;
+
+uint16_t stimulationTimeCounter = 0;
+uint16_t maxStimulationSamples = 0;
+bool stimulationEnabled = true;
 //----------------------------------- SETUP FUNCTION --------------------------------------------------------------------------------------------
 void setup()
 {
@@ -159,6 +166,9 @@ void setup()
 
     lowPowerVoltageInADUnits = (uint16_t)((lowPowerVoltage/15.0)*1023);
     shutDownVoltageInADUnits = (uint16_t)((shutDownVoltage/15.0)*1023);
+
+    maxStimulationSamples = (uint16_t)(60000*(percentageOfStimulationInSixSeconds/100.0));//6sec *(max%/100%)
+
     
     powerState = POWER_STATE_GOOD; 
     //put initial measurement of voltage to highest to avoid going in sleep mode         
@@ -343,10 +353,23 @@ void loop()
                   if(envelopeFirstChanel>movingThresholdSum)
                   {
                       emgCrossedTheThreshold = 1;
+                      stimulationTimeCounter++;
+                      if(stimulationTimeCounter>maxStimulationSamples)
+                      {
+                          stimulationEnabled = false;
+                      }
                   }
                   else
                   {
                       emgCrossedTheThreshold = 0;
+                      if(stimulationTimeCounter>0)
+                      {
+                        stimulationTimeCounter--;
+                      }
+                      else
+                      {
+                        stimulationEnabled = true;
+                      }
                   }
                   //-------------------------------------------------------------------------------------------------
           
@@ -503,7 +526,7 @@ ISR(TIMER1_COMPA_vect) {
   outputFrameBuffer[1]=  samplingBuffer[0] & 0x7F;              //first bit of every byte is used to flag start of the framr
     outputBufferReady = 1;                                        //signal main loop to send frame
 
-  if(emgCrossedTheThreshold)
+  if(emgCrossedTheThreshold && stimulationEnabled)
   {
         counterForPeriodOfStimulation--;
         if(counterForPeriodOfStimulation==0)
